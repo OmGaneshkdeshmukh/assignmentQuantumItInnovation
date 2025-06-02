@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-
-import '../controller/task_controller.dart';
-import '../model/task_model.dart';
+import 'package:todoapp/controller/notification_service.dart';
+import 'package:todoapp/controller/task_controller.dart';
+import 'package:todoapp/model/task_model.dart';
 
 class TaskForm extends StatefulWidget {
   final int? index;
@@ -15,6 +15,12 @@ class TaskForm extends StatefulWidget {
   @override
   State<TaskForm> createState() => _TaskFormState();
 }
+
+final Map<int, String> _priorityMap = {
+  1: 'High',
+  2: 'Medium',
+  3: 'Low',
+};
 
 class _TaskFormState extends State<TaskForm> {
   final _formKey = GlobalKey<FormState>();
@@ -39,7 +45,8 @@ class _TaskFormState extends State<TaskForm> {
     final TaskController taskController = Get.find();
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.index == null ? "Add Task" : "Edit Task")),
+      appBar:
+          AppBar(title: Text(widget.index == null ? "Add Task" : "Edit Task")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -54,21 +61,24 @@ class _TaskFormState extends State<TaskForm> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Description'),
-                validator: (value) => value!.isEmpty ? 'Enter description' : null,
+                validator: (value) =>
+                    value!.isEmpty ? 'Enter description' : null,
               ),
               DropdownButtonFormField<int>(
                 value: _priority,
-                items: List.generate(3, (index) => DropdownMenuItem(
-                  value: index + 1,
-                  child: Text("Priority ${index + 1}"),
-                )),
+                items: _priorityMap.entries.map((entry) {
+                  return DropdownMenuItem<int>(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  );
+                }).toList(),
                 onChanged: (value) => setState(() => _priority = value!),
                 decoration: const InputDecoration(labelText: 'Priority'),
-                validator: (value) =>
-                    value == null ? 'Select priority' : null,
+                validator: (value) => value == null ? 'Select priority' : null,
               ),
               ListTile(
-                title: Text("Due Date: ${DateFormat.yMd().add_jm().format(_dueDate)}"),
+                title: Text(
+                    "Due Date: ${DateFormat.yMd().add_jm().format(_dueDate)}"),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final date = await showDatePicker(
@@ -84,8 +94,8 @@ class _TaskFormState extends State<TaskForm> {
                     );
                     if (time != null) {
                       setState(() {
-                        _dueDate = DateTime(
-                          date.year, date.month, date.day, time.hour, time.minute);
+                        _dueDate = DateTime(date.year, date.month, date.day,
+                            time.hour, time.minute);
                       });
                     }
                   }
@@ -93,7 +103,7 @@ class _TaskFormState extends State<TaskForm> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final newTask = Task(
                       title: _titleController.text,
@@ -101,11 +111,26 @@ class _TaskFormState extends State<TaskForm> {
                       priority: _priority,
                       dueDate: _dueDate,
                     );
+
                     if (widget.index == null) {
                       taskController.addTask(newTask);
                     } else {
                       taskController.updateTask(widget.index!, newTask);
                     }
+
+                    // Schedule reminder 10 minutes before due date
+                    final reminderTime =
+                        _dueDate.subtract(const Duration(minutes: 10));
+                    if (reminderTime.isAfter(DateTime.now())) {
+                      await NotificationService.scheduleNotification(
+                        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                        title: 'Reminder: ${newTask.title}',
+                        body:
+                            'This task is due at ${DateFormat.jm().format(_dueDate)}',
+                        scheduledTime: reminderTime,
+                      );
+                    }
+
                     Get.back();
                   }
                 },

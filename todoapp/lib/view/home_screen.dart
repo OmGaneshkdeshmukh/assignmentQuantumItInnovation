@@ -12,6 +12,11 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final TaskController taskController = Get.put(TaskController());
     final TextEditingController searchController = TextEditingController();
+    final Map<int, String> priorityLabels = {
+      1: 'High',
+      2: 'Medium',
+      3: 'Low',
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -22,10 +27,39 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               Get.defaultDialog(
                 title: "Search Tasks",
-                content: TextField(
-                  controller: searchController,
-                  decoration: const InputDecoration(hintText: "Enter keyword"),
-                  onChanged: (value) => taskController.searchTasks(value),
+                content: Column(
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      decoration:
+                          const InputDecoration(hintText: "Enter keyword"),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            taskController.searchTasks(searchController.text);
+                            Get.back(); // Close the dialog
+                          },
+                          child: const Text("Search"),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[300],
+                          ),
+                          onPressed: () {
+                            searchController.clear();
+                            taskController
+                                .sortTasksByCreation(); // Reset to original full list
+                            Get.back();
+                          },
+                          child: const Text("Clear"),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
@@ -58,7 +92,8 @@ class HomeScreen extends StatelessWidget {
               return ListTile(
                 title: Text(task.title),
                 subtitle: Text(
-                    "Priority: ${task.priority} | Due: ${DateFormat.yMd().add_jm().format(task.dueDate)}"),
+                  "Priority: ${priorityLabels[task.priority] ?? 'Unknown'} | Due: ${DateFormat.yMd().add_jm().format(task.dueDate)}",
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () => taskController.removeTask(index),

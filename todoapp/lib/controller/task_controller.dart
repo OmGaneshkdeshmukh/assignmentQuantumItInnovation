@@ -21,7 +21,7 @@ class TaskController extends GetxController {
   }
 
   void sortTasksByPriority() {
-    tasks.sort((a, b) => b.priority.compareTo(a.priority));
+    tasks.sort((a, b) => a.priority.compareTo(b.priority));
   }
 
   void sortTasksByDueDate() {
