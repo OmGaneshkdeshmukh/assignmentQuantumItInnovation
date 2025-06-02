@@ -1,0 +1,76 @@
+// view/home_screen.dart
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:todoapp/controller/task_controller.dart';
+import 'package:todoapp/view/task_form.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final TaskController taskController = Get.put(TaskController());
+    final TextEditingController searchController = TextEditingController();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("To Do List"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Get.defaultDialog(
+                title: "Search Tasks",
+                content: TextField(
+                  controller: searchController,
+                  decoration: const InputDecoration(hintText: "Enter keyword"),
+                  onChanged: (value) => taskController.searchTasks(value),
+                ),
+              );
+            },
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == "Priority") {
+                taskController.sortTasksByPriority();
+              } else if (value == "Due Date") {
+                taskController.sortTasksByDueDate();
+              } else if (value == "Creation") {
+                taskController.sortTasksByCreation();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                  value: "Priority", child: Text("Sort by Priority")),
+              const PopupMenuItem(
+                  value: "Due Date", child: Text("Sort by Due Date")),
+              const PopupMenuItem(
+                  value: "Creation", child: Text("Sort by Creation")),
+            ],
+          )
+        ],
+      ),
+      body: Obx(() => ListView.builder(
+            itemCount: taskController.tasks.length,
+            itemBuilder: (context, index) {
+              final task = taskController.tasks[index];
+              return ListTile(
+                title: Text(task.title),
+                subtitle: Text(
+                    "Priority: ${task.priority} | Due: ${DateFormat.yMd().add_jm().format(task.dueDate)}"),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => taskController.removeTask(index),
+                ),
+                onTap: () => Get.to(() => TaskForm(index: index, task: task)),
+              );
+            },
+          )),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Get.to(() => const TaskForm()),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
