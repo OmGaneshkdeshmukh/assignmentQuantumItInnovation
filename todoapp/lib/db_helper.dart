@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:todoapp/model/task_model.dart';
@@ -12,8 +11,6 @@ class DBHelper {
     _db = await initDb();
     return _db!;
   }
-  
-  static get tasks => null;
 
   static Future<Database> initDb() async {
     final dbPath = await getDatabasesPath();
@@ -32,28 +29,36 @@ class DBHelper {
     });
   }
 
+  /// Inserts a task and logs all tasks after insertion
   static Future<void> insertTask(Task task) async {
     final db = await database;
-    await db.insert('tasks', {
-      'title': task.title,
-      'description': task.description,
-      'priority': task.priority,
-      'dueDate': task.dueDate.toIso8601String(),
-    });
+
+    await db.insert(
+      'tasks',
+      {
+        'title': task.title,
+        'description': task.description,
+        'priority': task.priority,
+        'dueDate': task.dueDate.toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore, // Ensures no overwrite
+    );
+
     log('[DB] Task added to local storage: ${task.title}, Priority: ${task.priority}');
-    // Log tasks
-  if (tasks.isNotEmpty) {
-    log('[LOG] Existing Tasks from Local Storage:');
-    for (var t in tasks) {
-      log('- ${t.title} | Priority: ${t.priority} | Due: ${t.dueDate}');
+
+    // Log all existing tasks after insertion
+    final allTasks = await fetchTasks();
+    if (allTasks.isNotEmpty) {
+      log('[LOG] Existing Tasks from Local Storage:');
+      for (var t in allTasks) {
+        log('- ${t.title} | Priority: ${t.priority} | Due: ${t.dueDate}');
+      }
+    } else {
+      log('[LOG] No tasks found in local storage.');
     }
-  } else {
-    log('[LOG] No tasks found in local storage.');
   }
 
-  return tasks;
-  }
-
+  /// Fetch all tasks from the database
   static Future<List<Task>> fetchTasks() async {
     final db = await database;
     final result = await db.query('tasks');
@@ -63,5 +68,13 @@ class DBHelper {
       priority: e['priority'] as int,
       dueDate: DateTime.parse(e['dueDate'] as String),
     )).toList();
+  }
+
+   /// Delete task by ID
+  static Future<int> deleteTask(int id) async {
+    final db = await database;
+    final deleted = await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+    log('[DB] Deleted task with ID: $id');
+    return deleted;
   }
 }

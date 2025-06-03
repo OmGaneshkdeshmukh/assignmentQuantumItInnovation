@@ -1,8 +1,8 @@
-// view/task_form.dart
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:todoapp/controller/notification_service.dart';
+import 'package:todoapp/controller/localnotification.dart';
 import 'package:todoapp/controller/task_controller.dart';
 import 'package:todoapp/model/task_model.dart';
 
@@ -45,8 +45,15 @@ class _TaskFormState extends State<TaskForm> {
     final TaskController taskController = Get.find();
 
     return Scaffold(
-      appBar:
-          AppBar(title: Text(widget.index == null ? "Add Task" : "Edit Task")),
+      appBar: AppBar(
+        title: Text(
+          widget.index == null ? "Add Task" : "Edit Task",
+          selectionColor: Colors.white,
+          style: TextStyle(fontWeight: FontWeight.w600,color: Colors.white),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.blue,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -101,8 +108,19 @@ class _TaskFormState extends State<TaskForm> {
                   }
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 50),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, //  Button background color
+                  foregroundColor: Colors.white, //  Text (foreground) color
+                  minimumSize: const Size(200, 50), //  Width: 200, Height: 50
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 15), // Padding inside button
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(12), //  Rounded corners
+                  ),
+                ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final newTask = Task(
@@ -117,22 +135,20 @@ class _TaskFormState extends State<TaskForm> {
                     } else {
                       taskController.updateTask(widget.index!, newTask);
                     }
-
-                    // Schedule reminder 10 minutes before due date
-                    final reminderTime =
-                        _dueDate.subtract(const Duration(minutes: 10));
-                    if (reminderTime.isAfter(DateTime.now())) {
-                      await NotificationService.scheduleNotification(
-                        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-                        title: 'Reminder: ${newTask.title}',
-                        body:
-                            'This task is due at ${DateFormat.jm().format(_dueDate)}',
-                        scheduledTime: reminderTime,
-                      );
-                    }
-
-                    Get.back();
                   }
+
+                  // Schedule notification 10 mins before due date
+                  _dueDate.subtract(const Duration(minutes: 1));
+
+                  LocalNotification.showSimpleNotification(
+                    title: "Task Added Successfully",
+                    body: "Task Notiffy",
+                    payload: "Task Data",
+                  );
+                  Text("Notification");
+
+                  Get.back();
+                  log("Task added, returning to home");
                 },
                 child: Text(widget.index == null ? 'Add Task' : 'Update Task'),
               )

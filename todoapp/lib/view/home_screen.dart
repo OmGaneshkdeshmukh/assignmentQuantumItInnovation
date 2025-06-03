@@ -19,11 +19,12 @@ class HomeScreen extends StatelessWidget {
     };
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("To Do List"),
+      appBar: AppBar( backgroundColor: Colors.blue,
+        title: const Text("To Do List",  style: TextStyle(fontWeight: FontWeight.w600,color: Colors.white),),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: const Icon(Icons.search,color: Colors.white,),
             onPressed: () {
               Get.defaultDialog(
                 title: "Search Tasks",
@@ -64,7 +65,7 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-          PopupMenuButton<String>(
+          PopupMenuButton<String>(iconColor: Colors.white,
             onSelected: (value) {
               if (value == "Priority") {
                 taskController.sortTasksByPriority();
@@ -85,7 +86,9 @@ class HomeScreen extends StatelessWidget {
           )
         ],
       ),
-      body: Obx(() => ListView.builder(
+      body: 
+
+      Obx(() => ListView.builder(
             itemCount: taskController.tasks.length,
             itemBuilder: (context, index) {
               final task = taskController.tasks[index];
@@ -102,9 +105,9 @@ class HomeScreen extends StatelessWidget {
               );
             },
           )),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton( backgroundColor: Colors.blue,
         onPressed: () => Get.to(() => const TaskForm()),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add,color: Colors.white,),
       ),
     );
   }
