@@ -74,23 +74,6 @@ void main() async {
     print("Notification permission not granted");
   }
   */
-
-  // Show a test notification to verify that notifications work on app start
-  await flutterLocalNotificationsPlugin.show(
-    0,
-    'Test Notification',
-    'This is a test notification',
-    const NotificationDetails(
-      android: AndroidNotificationDetails(
-        'task_channel_id',
-        'Task Notifications',
-        channelDescription: 'Test notification channel',
-        importance: Importance.max,
-        priority: Priority.high,
-      ),
-    ),
-  );
-
   // Run the app using GetMaterialApp with the HomeScreen as the start screen
   runApp(
     const GetMaterialApp(
